@@ -263,7 +263,7 @@ def base_params(cls):
 
 
 def seg_rank(seg):
-    return CLASS_RANK.get(str(seg.get("travel_class", "")).strip().lower(), 1)
+    return CLASS_RANK.get(str(seg.get("travel_class", "")).strip().lower().removesuffix(" class"), 1)
 
 
 def parse_option(o):
