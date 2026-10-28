@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>伦敦 ⇄ 上海</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --surface-2: #f3f2ee;
+  --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --ring: rgba(11,11,11,0.10);
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
+  --good: #006300; --critical: #d03b3b;
+  --seq-0: #cde2fb; --seq-1: #9ec5f4; --seq-2: #6da7ec; --seq-3: #3987e5; --seq-4: #256abf; --seq-5: #184f95;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232321;
+    --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+    --good: #0ca30c; --critical: #e66767;
+    --seq-0: #0d366b; --seq-1: #104281; --seq-2: #184f95; --seq-3: #256abf; --seq-4: #3987e5; --seq-5: #6da7ec;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232321;
+  --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+  --good: #0ca30c; --critical: #e66767;
+  --seq-0: #0d366b; --seq-1: #104281; --seq-2: #184f95; --seq-3: #256abf; --seq-4: #3987e5; --seq-5: #6da7ec;
+}
+* { box-sizing: border-box; }
+html { background: var(--page); }
+body { margin: 0; background: var(--page); color: var(--ink);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+main { max-width: 1080px; margin: 0 auto; padding: 20px 16px 40px; }
+h1 { font-size: 20px; margin: 0; font-weight: 650; }
+h2 { font-size: 14px; margin: 0; font-weight: 600; color: var(--ink-2); }
+.muted { color: var(--muted); }
+.num { font-variant-numeric: tabular-nums; }
+.card { background: var(--surface); border: 1px solid var(--ring); border-radius: 12px; padding: 18px; margin-top: 14px; }
+.row { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2);
+  background: var(--surface-2); border-radius: 999px; padding: 3px 10px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--good); }
+.dot.off { background: var(--critical); }
+.sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex: none; }
+.btn { font-size: 13px; text-decoration: none; color: var(--ink); background: var(--surface-2);
+  border: 1px solid var(--ring); border-radius: 8px; padding: 5px 11px; white-space: nowrap; }
+.btn:hover { border-color: var(--axis); }
+
+/* hero */
+.hero-head { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+.hero-num { font-size: 46px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+.hero-dates { font-size: 17px; font-weight: 600; }
+.legs { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; margin-top: 18px; }
+.leg { background: var(--surface-2); border-radius: 10px; padding: 12px 14px; font-size: 13px; }
+.leg-h { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 4px; }
+.seg { display: grid; grid-template-columns: 56px 1fr auto; gap: 0 10px; padding: 6px 0; }
+.seg .t { font-weight: 600; }
+.seg .r { text-align: right; color: var(--ink-2); }
+.lay { font-size: 12px; color: var(--muted); border-top: 1px dashed var(--axis); border-bottom: 1px dashed var(--axis); padding: 2px 0; }
+.tag { font-size: 11px; padding: 0 5px; border-radius: 4px; border: 1px solid var(--axis); color: var(--ink-2); margin-left: 4px; }
+.acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; align-items: center; }
+.alt { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px;
+  border-top: 1px solid var(--grid); font-size: 14px; }
+.alt .p { font-size: 18px; font-weight: 650; }
+
+/* chart */
+.wrap { position: relative; }
+svg { display: block; width: 100%; height: 240px; overflow: visible; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--ring);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12); border-radius: 8px; padding: 8px 10px; font-size: 12px; min-width: 140px;
+  opacity: 0; transition: opacity .1s; z-index: 5; }
+.tip .r { display: flex; align-items: center; gap: 6px; justify-content: space-between; }
+
+/* matrix */
+.seg-ctl { display: inline-flex; background: var(--surface-2); border-radius: 8px; padding: 3px; gap: 2px; }
+.seg-ctl button { font: inherit; font-size: 12px; border: 0; background: transparent; color: var(--ink-2);
+  padding: 4px 10px; border-radius: 6px; cursor: pointer; }
+.seg-ctl button.on { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--ring); font-weight: 600; }
+.mx { overflow-x: auto; margin-top: 12px; }
+.mx table { border-collapse: separate; border-spacing: 3px; margin: 0 auto; }
+.mx th { font-size: 12px; font-weight: 500; color: var(--ink-2); padding: 4px 6px; white-space: nowrap; }
+.mx th .muted { font-weight: 400; }
+.mx td { width: 84px; height: 44px; text-align: center; border-radius: 6px; font-size: 14px; font-weight: 600;
+  font-variant-numeric: tabular-nums; cursor: default; }
+.mx td.empty { background: var(--surface-2); color: var(--muted); font-weight: 400; }
+.mx td.best { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ink); }
+.scale { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); margin-top: 10px; justify-content: center; }
+.scale i { width: 18px; height: 8px; border-radius: 2px; display: inline-block; }
+
+/* tables */
+.tables { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 12px; }
+table.t { align-self: start; width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+table.t caption { text-align: left; font-size: 12px; color: var(--ink-2); padding-bottom: 4px; font-weight: 600; }
+table.t th { text-align: right; font-weight: 500; color: var(--muted); font-size: 12px; padding: 4px; border-bottom: 1px solid var(--axis); }
+table.t th:first-child { text-align: left; }
+table.t td { padding: 6px 4px; border-bottom: 1px solid var(--grid); text-align: right; white-space: nowrap; }
+table.t td:first-child { text-align: left; color: var(--ink-2); }
+table.t td.na { color: var(--muted); }
+table.t b { font-weight: 700; }
+table.t small { color: var(--muted); margin-left: 4px; }
+
+footer { margin-top: 14px; font-size: 12px; color: var(--muted); display: flex; gap: 6px 14px; flex-wrap: wrap; }
+.err { color: var(--critical); font-size: 12px; margin-top: 6px; word-break: break-all; }
+@media (max-width: 720px) {
+  .legs, .tables { grid-template-columns: minmax(0, 1fr); }
+  .hero-num { font-size: 40px; }
+  .card { padding: 14px; }
+  .mx td { width: 64px; height: 40px; font-size: 12px; }
+  .mx th { padding: 2px; font-size: 11px; }
+  .mx th .muted { display: none; }
+  .mx table { border-spacing: 2px; }
+}
+</style>
+</head>
+<body>
+<main>
+  <div class="row">
+    <h1>伦敦 ⇄ 上海</h1>
+    <div class="pill" id="live"><span class="dot"></span><span>—</span></div>
+  </div>
+
+  <section class="card" id="hero"><span class="muted">等待第一轮查询…</span></section>
+
+  <section class="card">
+    <div class="row"><h2>走势</h2><div class="legend" id="legend"></div></div>
+    <div class="wrap" id="chartWrap" style="margin-top:10px">
+      <svg id="chart" role="img" aria-label="最低价走势"></svg>
+      <div class="tip" id="ctip"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="row"><h2>日期</h2>
+      <div class="seg-ctl" id="modeCtl"><button data-m="primary">商务</button><button data-m="all">含超经</button></div></div>
+    <div class="mx wrap" id="mxWrap"><div id="matrix"></div><div class="tip" id="mtip"></div></div>
+    <div class="scale" id="scale"></div>
+  </section>
+
+  <section class="card">
+    <h2>每日</h2>
+    <div class="tables">
+      <table class="t" id="tOut"></table>
+      <table class="t" id="tRet"></table>
+      <table class="t" id="tRt"></table>
+    </div>
+  </section>
+
+  <footer id="foot"></footer>
+  <div id="errs"></div>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let D = null, SERIES = [], MODE = "primary";
+try { MODE = localStorage.getItem("fw-mode") || "primary"; } catch (e) {}
+
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const money = (v) => v == null ? "—" : D.symbol + Math.round(v).toLocaleString("en-GB");
+const md = (s) => `${+s.slice(5, 7)}/${+s.slice(8, 10)}`;
+const wk = (s) => "日一二三四五六"[new Date(s.slice(0, 10) + "T12:00:00Z").getUTCDay()];
+const dur = (m) => `${Math.floor(m / 60)}h${String(m % 60).padStart(2, "0")}`;
+const hm = (s) => s ? s.slice(11, 16) : "";
+const CLS = { 1: "经济", 2: "超经", 3: "商务", 4: "头等" };
+const PRANK = { business: 3, premium: 2, first: 4, economy: 1 };
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const until = (ts) => {
+  const s = ts - Date.now() / 1000;
+  return s < 60 ? "马上" : s < 3600 ? Math.round(s / 60) + " 分钟" : (s / 3600).toFixed(1) + " 小时";
+};
+
+function setupSeries() {
+  SERIES = [
+    { key: "rt_" + D.primary, name: "往返", color: "--s1", show: D.config.round_trip },
+    { key: "ow_primary", name: "单程×2", color: "--s2", show: true },
+    { key: "alt", name: "含超经", color: "--s3", show: D.config.classes.length > 1 },
+  ].filter((s) => s.show);
+}
+
+function legHTML(dir, date, opt) {
+  if (!opt) return `<div class="leg"><div class="leg-h"><span>${dir} ${md(date)}</span></div><span class="muted">—</span></div>`;
+  let h = `<div class="leg"><div class="leg-h"><span>${dir} ${md(date)} 周${wk(date)}</span><span class="num">${dur(opt.total)}</span></div>`;
+  opt.segs.forEach((s, i) => {
+    if (i > 0 && opt.lays[i - 1]) h += `<div class="lay">${esc(opt.lays[i - 1].at)} ${dur(opt.lays[i - 1].dur || 0)}</div>`;
+    const plus = s.arr && s.dep && s.arr.slice(0, 10) !== s.dep.slice(0, 10) ? "<sup>+1</sup>" : "";
+    const tag = s.cls !== PRANK[D.primary] ? `<span class="tag">${CLS[s.cls]}</span>` : "";
+    h += `<div class="seg"><span class="t num">${hm(s.dep)}</span>
+      <span>${esc(s.from)} → ${esc(s.to)}${tag}</span><span class="r">${esc(s.no)}</span>
+      <span class="t num">${hm(s.arr)}${plus}</span><span class="muted">${esc(s.airline)}</span><span class="r muted num">${dur(s.dur)}</span></div>`;
+  });
+  return h + `</div>`;
+}
+
+const linkBtns = (b) => (b.links || []).map((l) =>
+  `<a class="btn" target="_blank" rel="noopener" href="${l.u}">${b.kind === "rt" ? "Google Flights" : l.t} ↗</a>`).join("");
+
+function renderHero() {
+  const b = D.best, a = D.strategies.alt;
+  const altRow = a && (!b || a.price < b.price) ? `<div class="alt">
+      <span class="sw" style="background:var(--s3)"></span><span class="p num">${money(a.price)}</span>
+      <span>${md(a.out_date)} → ${md(a.ret_date)}</span><span class="tag" style="margin:0">含超经</span>
+      ${b ? `<span class="muted num">−${money(b.price - a.price)}</span>` : ""}
+      <span style="flex:1"></span>${linkBtns(a)}</div>` : "";
+  if (!b) { $("hero").innerHTML = (altRow || `<span class="muted">等待第一轮查询…</span>`); return; }
+  const prim = SERIES.filter((s) => s.key !== "alt").map((s) => s.key);
+  const minEver = Math.min(...D.series.flatMap((p) => prim.map((k) => p[k]).filter((v) => v != null)));
+  const low = isFinite(minEver) && b.price <= minEver ? `<span class="pill" style="color:var(--good)">▼ 新低</span>` : "";
+  const tgt = D.config.target && b.price <= D.config.target ? `<span class="pill" style="color:var(--good)">✓ 目标价</span>` : "";
+  $("hero").innerHTML = `
+    <div class="hero-head">
+      <span class="hero-num num">${money(b.price)}</span>
+      <span class="hero-dates">${md(b.out_date)} 周${wk(b.out_date)} → ${md(b.ret_date)} 周${wk(b.ret_date)}</span>
+      ${low}${tgt}
+    </div>
+    <div class="legs">${legHTML("去", b.out_date, b.out)}${legHTML("回", b.ret_date, b.ret)}</div>
+    <div class="acts">${linkBtns(b)}</div>
+    ${altRow}`;
+}
+
+function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(raw))); const n = raw / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; }
+
+function renderChart() {
+  const svg = $("chart"), pts = D.series;
+  const active = SERIES.filter((s) => pts.some((p) => p[s.key] != null));
+  $("legend").innerHTML = active.map((s) => `<span><span class="sw" style="background:var(${s.color})"></span>${s.name}</span>`).join("");
+  const W = Math.max(300, $("chartWrap").clientWidth), H = 240, narrow = W < 560;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  if (pts.length < 2 || !active.length) { svg.innerHTML = `<text x="${W / 2}" y="120" text-anchor="middle" fill="${css("--muted")}" font-size="13">—</text>`; return; }
+  const L = 52, R = narrow ? 8 : 64, T = 10, B = 26;
+  const t0 = pts[0].ts, t1 = pts[pts.length - 1].ts || t0 + 1;
+  const vals = pts.flatMap((p) => active.map((s) => p[s.key]).filter((v) => v != null));
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const pad = Math.max(50, (hi - lo) * 0.12); lo = Math.max(0, lo - pad); hi += pad;
+  const step = niceStep((hi - lo) / 4); lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+  const x = (t) => L + (W - L - R) * (t1 === t0 ? 0.5 : (t - t0) / (t1 - t0));
+  const y = (v) => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
+  let g = "";
+  for (let v = lo; v <= hi + 1e-6; v += step) {
+    g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="${css("--grid")}"/>`;
+    g += `<text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="${css("--muted")}">${money(v)}</text>`;
+  }
+  const days = Math.max(1, Math.round((t1 - t0) / 86400)), nT = Math.min(narrow ? 4 : 6, days + 1);
+  for (let i = 0; i < nT; i++) {
+    const t = t0 + (t1 - t0) * i / Math.max(1, nT - 1), d = new Date(t * 1000);
+    const lab = days < 2 ? `${String(d.getHours()).padStart(2, "0")}:00` : `${d.getMonth() + 1}/${d.getDate()}`;
+    g += `<text x="${x(t)}" y="${H - 6}" text-anchor="middle" font-size="11" fill="${css("--muted")}">${lab}</text>`;
+  }
+  const labels = [];
+  active.forEach((s) => {
+    let d = "", prev = null;
+    pts.forEach((p) => {
+      const v = p[s.key];
+      if (v == null) { prev = null; return; }
+      d += prev == null ? `M${x(p.ts)},${y(v)}` : `H${x(p.ts)}V${y(v)}`;
+      prev = v;
+    });
+    g += `<path d="${d}" fill="none" stroke="${css(s.color)}" stroke-width="2" stroke-linejoin="round"/>`;
+    const end = pts[pts.length - 1][s.key];
+    if (end != null) labels.push({ s, v: end, y: y(end) });
+  });
+  labels.sort((a, b) => a.y - b.y);
+  for (let i = 1; i < labels.length; i++) if (labels[i].y - labels[i - 1].y < 14) labels[i].y = labels[i - 1].y + 14;
+  if (!narrow) labels.forEach((l) => { g += `<text x="${W - R + 8}" y="${l.y + 4}" font-size="11" font-weight="600" fill="${css("--ink-2")}">${money(l.v)}</text>`; });
+  g += `<line id="xh" y1="${T}" y2="${H - B}" stroke="${css("--axis")}" opacity="0"/><g id="dots"></g>
+    <rect id="hit" x="${L}" y="0" width="${W - L - R}" height="${H}" fill="transparent"/>`;
+  svg.innerHTML = g;
+  const tip = $("ctip"), wrap = $("chartWrap");
+  const move = (ev) => {
+    const r = svg.getBoundingClientRect();
+    const cx = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
+    const t = t0 + (cx - L) / (W - L - R) * (t1 - t0);
+    let p = pts[0]; for (const q of pts) if (q.ts <= t) p = q;
+    const xx = Math.max(L, Math.min(W - R, cx));
+    const xh = svg.querySelector("#xh"); xh.setAttribute("x1", xx); xh.setAttribute("x2", xx); xh.setAttribute("opacity", 1);
+    svg.querySelector("#dots").innerHTML = active.filter((s) => p[s.key] != null).map((s) =>
+      `<circle cx="${xx}" cy="${y(p[s.key])}" r="4" fill="${css(s.color)}" stroke="${css("--surface")}" stroke-width="2"/>`).join("");
+    const d = new Date(p.ts * 1000);
+    tip.innerHTML = `<div class="muted" style="margin-bottom:4px">${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}</div>` +
+      active.map((s) => `<div class="r"><span><span class="sw" style="background:var(${s.color})"></span> ${s.name}</span><b class="num">${money(p[s.key])}</b></div>`).join("");
+    tip.style.left = Math.min(xx + 12, wrap.clientWidth - 150) + "px"; tip.style.top = "4px"; tip.style.opacity = 1;
+  };
+  const hide = () => { tip.style.opacity = 0; svg.querySelector("#xh").setAttribute("opacity", 0); svg.querySelector("#dots").innerHTML = ""; };
+  const hit = svg.querySelector("#hit");
+  hit.addEventListener("mousemove", move); hit.addEventListener("touchstart", move, { passive: true });
+  hit.addEventListener("touchmove", move, { passive: true }); hit.addEventListener("mouseleave", hide);
+}
+
+function renderMatrix() {
+  const all = MODE === "all";
+  const P = (c) => all ? c.price_all : c.price, LB = (c) => all ? c.label_all : c.label;
+  const bestRef = all ? D.best_all : D.best;
+  $("modeCtl").style.display = D.config.classes.length > 1 ? "" : "none";
+  document.querySelectorAll("#modeCtl button").forEach((btn) => {
+    btn.className = btn.dataset.m === MODE ? "on" : "";
+    btn.onclick = () => { MODE = btn.dataset.m; try { localStorage.setItem("fw-mode", MODE); } catch (e) {} renderMatrix(); };
+  });
+  const prices = D.cells.filter(P).map(P);
+  const lo = Math.min(...prices), hi = Math.max(...prices);
+  const steps = ["--seq-5", "--seq-4", "--seq-3", "--seq-2", "--seq-1", "--seq-0"]; // 便宜 → 贵
+  const dark = document.documentElement.dataset.theme === "dark" || (document.documentElement.dataset.theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+  const bucket = (v) => hi === lo ? 0 : Math.min(5, Math.floor((v - lo) / (hi - lo) * 6));
+  const byKey = Object.fromEntries(D.cells.map((c) => [c.out + "|" + c.ret, c]));
+  let h = `<table><tr><th>去 ＼ 回</th>${D.config.ret.map((r) => `<th>${md(r)} <span class="muted">${wk(r)}</span></th>`).join("")}</tr>`;
+  D.config.out.forEach((o) => {
+    h += `<tr><th style="text-align:right">${md(o)} <span class="muted">${wk(o)}</span></th>`;
+    D.config.ret.forEach((r) => {
+      const c = byKey[o + "|" + r];
+      if (!c || !P(c)) { h += `<td class="empty">—</td>`; return; }
+      const b = bucket(P(c));
+      const fg = dark ? (b <= 1 ? "#0b0b0b" : "#f0efec") : (b <= 2 ? "#ffffff" : "#0b0b0b");
+      const isBest = bestRef && bestRef.out_date === o && bestRef.ret_date === r;
+      h += `<td class="${isBest ? "best" : ""}" data-k="${o}|${r}" style="background:var(${steps[b]});color:${fg}">${money(P(c))}</td>`;
+    });
+    h += `</tr>`;
+  });
+  $("matrix").innerHTML = h + `</table>`;
+  $("scale").innerHTML = prices.length ? `${D.symbol}${steps.map((s) => `<i style="background:var(${s})"></i>`).join("")}${D.symbol}${D.symbol}${D.symbol}` : "";
+  const tip = $("mtip"), wrap = $("mxWrap");
+  $("matrix").querySelectorAll("td[data-k]").forEach((td) => {
+    const show = () => {
+      const c = byKey[td.dataset.k];
+      tip.innerHTML = `<b>${md(c.out)} → ${md(c.ret)}</b> <span class="muted">${c.stay} 天</span>
+        <div class="r" style="margin-top:4px"><span>${esc(LB(c))}</span><b class="num">${money(P(c))}</b></div>`;
+      const r = td.getBoundingClientRect(), w = wrap.getBoundingClientRect();
+      tip.style.left = Math.max(0, Math.min(r.left - w.left + wrap.scrollLeft, w.width - 220)) + "px";
+      tip.style.top = (r.bottom - w.top + 6) + "px"; tip.style.opacity = 1;
+    };
+    td.addEventListener("mouseenter", show); td.addEventListener("click", show);
+    td.addEventListener("mouseleave", () => (tip.style.opacity = 0));
+  });
+}
+
+const CNAME = { business: "商务", premium: "超经", first: "头等", economy: "经济" };
+function optTitle(o) {
+  return o ? esc(`${[...new Set(o.segs.map((s) => s.airline))].join("/")} · ${dur(o.total)} · ${o.cabin}`) : "";
+}
+function legTable(rows, el, caption) {
+  const cls = D.config.classes;
+  const mins = Object.fromEntries(cls.map((c) => [c, Math.min(...rows.map((r) => r[c]?.price).filter((v) => v))]));
+  el.innerHTML = `<caption>${caption}</caption><tr><th></th>${cls.map((c) => `<th>${CNAME[c]}</th>`).join("")}</tr>` + rows.map((r) =>
+    `<tr><td>${md(r.date)} ${wk(r.date)}</td>${cls.map((c) => {
+      const v = r[c];
+      if (!v || !v.price) return `<td class="na">—</td>`;
+      const p = money(v.price);
+      return `<td title="${optTitle(v.opt)}">${v.price === mins[c] ? `<b>${p}</b>` : p}</td>`;
+    }).join("")}</tr>`).join("");
+}
+function rtTable() {
+  const el = $("tRt");
+  if (!D.config.round_trip) { el.style.display = "none"; return; }
+  const cls = D.config.classes;
+  el.innerHTML = `<caption>往返</caption><tr><th></th>${cls.map((c) => `<th>${CNAME[c]}</th>`).join("")}</tr>` + D.rt.map((r) =>
+    `<tr><td>${md(r.date)} ${wk(r.date)}</td>${cls.map((c) => {
+      const v = r[c];
+      if (!v) return `<td class="na">—</td>`;
+      if (v.price) return `<td>${money(v.price)}<small>→${md(v.ret_date)}</small></td>`;
+      if (v.unverified) return `<td class="na">~${money(v.unverified)}<small>→${md(v.ret_date)}</small></td>`;
+      return `<td class="na">—</td>`;
+    }).join("")}</tr>`).join("");
+}
+
+function renderStatus() {
+  const s = D.status, c = D.config;
+  const err = s.last_error || s.paused_reason;
+  $("live").innerHTML = `<span class="dot ${err ? "off" : ""}"></span><span>${s.paused_reason ? esc(s.paused_reason) : s.last_error ? "查询出错" : s.next_run ? "下次 " + until(s.next_run) : "—"}</span>${D.fake ? `<span class="tag">演示</span>` : ""}`;
+  $("foot").innerHTML = [
+    s.left != null ? `额度 ${s.left}` : "",
+    s.per_day != null ? `${s.per_day} 次/天` : "",
+    `截止 ${md(c.stop)}`,
+  ].filter(Boolean).map((t) => `<span>${t}</span>`).join("");
+  $("errs").innerHTML = (s.last_error ? (s.last_errors || []).slice(-1) : []).map((e) => `<div class="err">${esc(e.key)}：${esc(e.error)}</div>`).join("");
+}
+
+async function load() {
+  try {
+    const r = await fetch("data.json?t=" + Date.now(), { cache: "no-store" });
+    D = await r.json();
+    setupSeries(); renderStatus(); renderHero(); renderChart(); renderMatrix();
+    const o = D.config.origins.split(",")[0], d = D.config.dests.split(",")[0];
+    legTable(D.legs.out, $("tOut"), `${o} → ${d}`); legTable(D.legs.ret, $("tRet"), `${d} → ${o}`); rtTable();
+  } catch (e) {
+    $("live").innerHTML = `<span class="dot off"></span><span>${esc(e.message)}</span>`;
+  }
+}
+load();
+setInterval(load, 60000);
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => D && (renderChart(), renderMatrix()));
+let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => D && renderChart(), 150); });
+</script>
+</body>
+</html>
