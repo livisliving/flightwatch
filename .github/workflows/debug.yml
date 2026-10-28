@@ -1,0 +1,29 @@
+# 临时诊断用，查清商务舱为什么全被过滤后删除
+name: Debug
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - env:
+          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+          ORIGINS: "LHR"
+          DESTS: "PVG,SHA"
+        run: |
+          python - <<'PY'
+          import app, collections
+          p = app.base_params("business")
+          p.update({"type": 2, "outbound_date": "2026-12-14", "departure_id": "LHR", "arrival_id": "PVG,SHA"})
+          res = app.serp_search(p)
+          raw = (res.get("best_flights") or []) + (res.get("other_flights") or [])
+          print("options:", len(raw), "error:", res.get("error"))
+          print("travel_class values:", collections.Counter(s.get("travel_class") for o in raw for s in o.get("flights", [])))
+          for o in raw[:12]:
+              opt = app.parse_option(o)
+              segs = [(s.get("airline"), s.get("travel_class"), s.get("duration")) for s in o.get("flights", [])]
+              print(o.get("price"), o.get("total_duration"), app.is_valid(opt, 3), segs)
+          PY
