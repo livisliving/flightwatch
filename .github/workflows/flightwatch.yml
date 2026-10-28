@@ -24,6 +24,7 @@ env:
   # ---- 行程 ----
   ORIGINS: "LHR"                # 出发机场，多个用逗号，如 "LHR,LGW"
   DESTS: "PVG,SHA"              # 上海浦东 + 虹桥
+  RET_ORIGINS: "HRB"            # 回程从哈尔滨出发；和 DESTS 一样时才会查往返票
   OUT_START: "2026-12-11"       # 去程最早
   OUT_END: "2026-12-16"         # 去程最晚
   RET_START: "2026-12-27"       # 回程最早
@@ -32,7 +33,7 @@ env:
   CLASSES: "business,premium"   # 商务舱 + 超级经济舱；只要商务舱就改成 "business"
   PRIMARY_CLASS: "business"     # 优先显示和提醒的舱位
   LONG_SEGMENT_HOURS: "5"       # 超过 5 小时的航段必须是上面的舱位；短的国内转机段可以是经济舱
-  ROUND_TRIP: "true"            # 同时比较往返票
+  ROUND_TRIP: "true"            # 同时比较往返票（回程从别的城市出发时自动关闭）
   # ---- 提醒 ----
   CURRENCY: "GBP"
   TARGET_PRICE: "0"             # 商务舱目标总价，低于它会发高优先级提醒；0 = 不设

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>伦敦 ⇄ 上海</title>
+<title>伦敦 → 上海，哈尔滨 → 伦敦</title>
 <style>
 :root {
   color-scheme: light;
@@ -125,7 +125,7 @@ footer { margin-top: 14px; font-size: 12px; color: var(--muted); display: flex; 
 <body>
 <main>
   <div class="row">
-    <h1>伦敦 ⇄ 上海</h1>
+    <h1>伦敦 → 上海，哈尔滨 → 伦敦</h1>
     <div class="pill" id="live"><span class="dot"></span><span>—</span></div>
   </div>
 
@@ -386,7 +386,7 @@ async function load() {
     D = await r.json();
     setupSeries(); renderStatus(); renderHero(); renderChart(); renderMatrix();
     const o = D.config.origins.split(",")[0], d = D.config.dests.split(",")[0];
-    legTable(D.legs.out, $("tOut"), `${o} → ${d}`); legTable(D.legs.ret, $("tRet"), `${d} → ${o}`); rtTable();
+    legTable(D.legs.out, $("tOut"), `${o} → ${d}`); legTable(D.legs.ret, $("tRet"), `${(D.config.ret_origins || D.config.dests).split(",")[0]} → ${o}`); rtTable();
   } catch (e) {
     $("live").innerHTML = `<span class="dot off"></span><span>${esc(e.message)}</span>`;
   }

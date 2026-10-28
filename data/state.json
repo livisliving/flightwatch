@@ -1,9 +1,6 @@
 {
- "alert_ref": 2428,
- "alert_ref_alt": 1555,
  "credit": 0.5307279733827676,
  "digest_day": "2026-10-28",
- "started": true,
  "status": {
   "hourly_limit": 250,
   "last_error": null,

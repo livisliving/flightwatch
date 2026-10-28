@@ -60,6 +60,7 @@ DASHBOARD_URL = env("DASHBOARD_URL", "")
 
 ORIGINS = env("ORIGINS", "LHR")
 DESTS = env("DESTS", "PVG,SHA")
+RET_ORIGINS = env("RET_ORIGINS", DESTS)  # 回程出发机场，默认和目的地相同
 OUT_DATES = day_range(parse_day(env("OUT_START", "2026-12-11")), parse_day(env("OUT_END", "2026-12-16")))
 RET_DATES = day_range(parse_day(env("RET_START", "2026-12-27")), parse_day(env("RET_END", "2026-12-30")))
 STAY_MIN = env_int("STAY_MIN", 0)  # 0 = 不限制
@@ -69,7 +70,8 @@ LONG_SEG_MIN = env_int("LONG_SEGMENT_HOURS", 5) * 60  # 超过这个时长的航
 CLASSES = [c.strip() for c in env("CLASSES", "business,premium").split(",") if c.strip()]
 # 首选舱位：看板大字和提醒优先显示它（默认商务舱）
 PRIMARY = env("PRIMARY_CLASS", "business" if "business" in CLASSES else CLASSES[0])
-ROUND_TRIP = env("ROUND_TRIP", "true").lower() in ("1", "true", "yes")
+# 往返票只在回程从目的地出发时才有意义
+ROUND_TRIP = env("ROUND_TRIP", "true").lower() in ("1", "true", "yes") and RET_ORIGINS == DESTS
 CURRENCY = env("CURRENCY", "GBP")
 TARGET_PRICE = env_int("TARGET_PRICE", 0)
 ALERT_MIN_DROP = env_int("ALERT_MIN_DROP", 20)
@@ -345,7 +347,7 @@ def run_query(key):
         if leg == "out":
             params.update({"departure_id": ORIGINS, "arrival_id": DESTS})
         else:
-            params.update({"departure_id": DESTS, "arrival_id": ORIGINS})
+            params.update({"departure_id": RET_ORIGINS, "arrival_id": ORIGINS})
         res = serp_search(params)
         if res.get("error") and not no_results_error(res):
             raise RuntimeError(res["error"])
@@ -768,7 +770,7 @@ def api_data():
             b["links"] = [{"t": "往返", "u": gf_link(origin1, dest1, b["out_date"], b["out_cls"], b["ret_date"])}]
         else:
             b["links"] = [{"t": "去程", "u": gf_link(origin1, dest1, b["out_date"], b["out_cls"])},
-                          {"t": "回程", "u": gf_link(dest1, origin1, b["ret_date"], b["ret_cls"])}]
+                          {"t": "回程", "u": gf_link(RET_ORIGINS.split(",")[0], origin1, b["ret_date"], b["ret_cls"])}]
         return b
 
     legs = {"out": [], "ret": []}
@@ -796,7 +798,7 @@ def api_data():
     errors = [r for r in rows[-50:] if not r["ok"]]
     return {
         "now": time.time(), "currency": CURRENCY, "symbol": SYM, "fake": FAKE_MODE,
-        "config": {"origins": ORIGINS, "dests": DESTS, "out": [str(d) for d in OUT_DATES],
+        "config": {"origins": ORIGINS, "dests": DESTS, "ret_origins": RET_ORIGINS, "out": [str(d) for d in OUT_DATES],
                    "ret": [str(d) for d in RET_DATES], "classes": CLASSES, "max_hours": MAX_MIN // 60,
                    "target": TARGET_PRICE, "stop": str(STOP_DATE), "round_trip": ROUND_TRIP},
         "status": dict(STATUS, total_checks=len(rows), n_queries=len(query_keys()),
