@@ -66,6 +66,7 @@ RET_DATES = day_range(parse_day(env("RET_START", "2026-12-27")), parse_day(env("
 STAY_MIN = env_int("STAY_MIN", 0)  # 0 = 不限制
 STAY_MAX = env_int("STAY_MAX", 0)
 MAX_MIN = env_int("MAX_HOURS", 17) * 60
+RET_MAX_MIN = env_int("RET_MAX_HOURS", MAX_MIN // 60) * 60  # 回程最长时长，默认和去程一样
 LONG_SEG_MIN = env_int("LONG_SEGMENT_HOURS", 5) * 60  # 超过这个时长的航段必须是高舱
 CLASSES = [c.strip() for c in env("CLASSES", "business,premium").split(",") if c.strip()]
 # 首选舱位：看板大字和提醒优先显示它（默认商务舱）
@@ -249,12 +250,12 @@ def serp_account():
     return http_json("https://serpapi.com/account.json?" + urllib.parse.urlencode({"api_key": SERPAPI_KEY}), 30)
 
 
-def base_params(cls):
+def base_params(cls, max_min=MAX_MIN):
     return {
         "currency": CURRENCY, "hl": "en", "gl": "uk", "adults": 1,
         "travel_class": CLASS_PARAM[cls],
-        # 给 Google 的上限放宽 3 小时，真正的 17 小时过滤在本地做
-        "max_duration": MAX_MIN + 180,
+        # 给 Google 的上限放宽 3 小时，真正的时长过滤在本地做
+        "max_duration": max_min + 180,
         "show_hidden": "true", "deep_search": "true",
     }
 
@@ -294,11 +295,11 @@ def cabin_label(opt):
     return "全程" + CLASS_CN[ranks[0]] if len(ranks) == 1 else "+".join(CLASS_CN[r] for r in ranks)
 
 
-def is_valid(opt, required_rank):
+def is_valid(opt, required_rank, max_min=MAX_MIN):
     """时长 ≤ 上限；所有长途段必须达到要求舱位；至少最长的那段达到要求舱位。"""
     if not opt["segs"] or not isinstance(opt["price"], (int, float)):
         return False
-    if opt["total"] > MAX_MIN:
+    if opt["total"] > max_min:
         return False
     longest = max(opt["segs"], key=lambda s: s["dur"])
     if longest["cls"] < required_rank:
@@ -309,10 +310,10 @@ def is_valid(opt, required_rank):
     return True
 
 
-def collect(res, required_rank):
+def collect(res, required_rank, max_min=MAX_MIN):
     raw = (res.get("best_flights") or []) + (res.get("other_flights") or [])
     opts = [parse_option(o) for o in raw]
-    valid = [o for o in opts if is_valid(o, required_rank)]
+    valid = [o for o in opts if is_valid(o, required_rank, max_min)]
     valid.sort(key=lambda o: o["price"])
     for o in valid:
         o["cabin"] = cabin_label(o)
@@ -342,7 +343,8 @@ def run_query(key):
     p = key.split("|")
     if p[0] == "ow":
         _, leg, d, cls = p
-        params = base_params(cls)
+        max_min = MAX_MIN if leg == "out" else RET_MAX_MIN
+        params = base_params(cls, max_min)
         params.update({"type": 2, "outbound_date": d})
         if leg == "out":
             params.update({"departure_id": ORIGINS, "arrival_id": DESTS})
@@ -351,7 +353,7 @@ def run_query(key):
         res = serp_search(params)
         if res.get("error") and not no_results_error(res):
             raise RuntimeError(res["error"])
-        valid, n = collect(res, CLASS_PARAM[cls])
+        valid, n = collect(res, CLASS_PARAM[cls], max_min)
         best = valid[0] if valid else None
         if best:
             best.pop("token", None)
@@ -365,7 +367,7 @@ def run_query(key):
     # 往返：回程日期选当前单程最便宜的一天
     _, d, cls = p
     ret = pick_rt_return(date.fromisoformat(d), cls)
-    params = base_params(cls)
+    params = base_params(cls, max(MAX_MIN, RET_MAX_MIN))
     params.update({"type": 1, "outbound_date": d, "return_date": str(ret),
                    "departure_id": ORIGINS, "arrival_id": DESTS})
     res = serp_search(params)
@@ -387,7 +389,7 @@ def run_query(key):
             used += 1
             if rres.get("error") and not no_results_error(rres):
                 raise RuntimeError("回程核实: " + rres["error"])
-            rvalid, _ = collect(rres, CLASS_PARAM[cls])
+            rvalid, _ = collect(rres, CLASS_PARAM[cls], RET_MAX_MIN)
             data["verified"] = True
             if rvalid:
                 r0 = rvalid[0]
@@ -799,7 +801,7 @@ def api_data():
     return {
         "now": time.time(), "currency": CURRENCY, "symbol": SYM, "fake": FAKE_MODE,
         "config": {"origins": ORIGINS, "dests": DESTS, "ret_origins": RET_ORIGINS, "out": [str(d) for d in OUT_DATES],
-                   "ret": [str(d) for d in RET_DATES], "classes": CLASSES, "max_hours": MAX_MIN // 60,
+                   "ret": [str(d) for d in RET_DATES], "classes": CLASSES, "max_hours": MAX_MIN // 60, "ret_max_hours": RET_MAX_MIN // 60,
                    "target": TARGET_PRICE, "stop": str(STOP_DATE), "round_trip": ROUND_TRIP},
         "status": dict(STATUS, total_checks=len(rows), n_queries=len(query_keys()),
                        last_errors=[{"key": e["key"], "ts": e["ts"], "error": e["error"]} for e in errors[-3:]]),
@@ -988,7 +990,7 @@ def main():
         run_once()
         return
     log(f"FlightWatch 启动：{ORIGINS} ⇄ {DESTS}，去 {OUT_DATES[0]}~{OUT_DATES[-1]}，回 {RET_DATES[0]}~{RET_DATES[-1]}，"
-        f"舱位 {CLASSES}，单程 ≤{MAX_MIN // 60}h，共 {len(query_keys())} 个查询{'（演示模式）' if FAKE_MODE else ''}")
+        f"舱位 {CLASSES}，去程 ≤{MAX_MIN // 60}h，回程 ≤{RET_MAX_MIN // 60}h，共 {len(query_keys())} 个查询{'（演示模式）' if FAKE_MODE else ''}")
     threading.Thread(target=scheduler, daemon=True).start()
     log(f"看板: http://0.0.0.0:{PORT}")
     ThreadingHTTPServer(("0.0.0.0", PORT), Handler).serve_forever()
