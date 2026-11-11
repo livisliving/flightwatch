@@ -1,17 +1,17 @@
 {
  "alert_ref": 3253,
  "alert_ref_alt": 2271,
- "credit": 0.9470723573417151,
+ "credit": 0.65637670223865,
  "digest_day": "2026-11-10",
  "started": true,
  "status": {
   "hourly_limit": 250,
   "last_error": null,
-  "last_run": 1794343977.1159272,
-  "left": 154,
-  "next_run": 1794351177.1708348,
+  "last_run": 1794362292.0756502,
+  "left": 153,
+  "next_run": 1794369492.1872356,
   "paused_reason": null,
-  "per_day": 8.4,
+  "per_day": 8.5,
   "renewal": "2026-11-28T00:00:00+00:00"
  }
 }
